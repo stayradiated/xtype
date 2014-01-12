@@ -41,6 +41,16 @@ describe 'Validation', ->
       ( -> define 'name_a', 'number' ).should.fail
 
 
+    it 'should be able to rename types', ->
+
+      define 'int', 'number'
+
+      test = define 'test', 'int'
+
+      test(20).should.be.true
+      test('string').should.be.false
+
+
     it 'should know the difference between an object and an array', ->
 
       test = define 'array_test', 'array'
@@ -273,6 +283,43 @@ describe 'Validation', ->
       test(['a', 'short', 'story']).should.be.true
       test([10, 'short', 'stories']).should.be.false
 
+    it 'should have on-the-fly inheritance', ->
+
+      define 'thing_1', 'array',
+        keys:
+          1: 'string'
+
+      define 'thing_2', 'array',
+        keys:
+          1: 'array'
+
+      define 'thing_3', 'array',
+        keys:
+          1: 'object'
+
+      test = define 'model', 'array',
+        keys:
+          0: 'number'
+        inherit: (obj) ->
+          switch obj[0]
+            when 0
+              return 'thing_1'
+            when 1
+              return 'thing_2'
+            when 2
+              return 'thing_3'
+
+      test([0, 'word']).should.be.true
+      test([0, []]).should.be.false
+      test([0, {}]).should.be.false
+
+      test([1, 'word']).should.be.false
+      test([1, []]).should.be.true
+      test([1, {}]).should.be.false
+
+      test([2, 'word']).should.be.false
+      test([2, []]).should.be.false
+      test([2, {}]).should.be.true
 
   describe '[defineFn]', ->
 

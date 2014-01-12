@@ -78,10 +78,20 @@ define = (name, type, details) ->
 
   # Inheriting properties from other definitions
   inherit = null
-  # if typeof details.inherit is 'function'
-  #   inherit = (obj) ->
-  #     return definitions[details.inherit(obj)](obj)
-  if typeof details.inherit is 'string'
+  if typeof details.inherit is 'function'
+    inherit = (obj) ->
+      type = details.inherit(obj)
+      keys = mergeKeys def.details, getDef(type).details
+
+      for own key, value of obj
+        if keys[key]
+          return false unless keys[key](value)
+        else if not details.other
+          return false
+
+      return true
+
+  else if typeof details.inherit is 'string'
     keys = mergeKeys def.details, getDef(details.inherit).details
 
   # Creating definition
