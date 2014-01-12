@@ -69,20 +69,51 @@ define('model', 'object', {
     }
 });
 
-test = define('task', 'object', {
-    inherit: 'base',
+task = define('task', 'object', {
+    inherit: 'model',
     keys: {
         completed: 'boolean',
         notes: 'string'
     }
 });
 
-test({
+define('taskArray', 'array', {
+    all: 'task'
+});
+
+list = define('list', 'object', {
+    inherit: 'model',
+    keys: {
+        tasks: 'taskArray'
+    }
+});
+
+task({
     id: 20,
     name: 'Just a task',
     completed: true,
     notes: 'Finish xType'
-})
+}); // true
+
+list({
+    id: 10,
+    tasks: [
+        {
+            id: 1,
+            name: 'a task in a list',
+            completed: false,
+            notes: ''
+        },
+        {
+            id: 2,
+            name: 'another task',
+            completed: false,
+            notes: 'with some notes'
+        }
+    ]
+}); // true
+
+
 ````
 
 ## TODO
