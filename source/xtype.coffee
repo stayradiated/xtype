@@ -1,9 +1,7 @@
-# Hold all the definitions
-definitions = {}
+Dictionary = require './dictionary'
+fn = require './fn'
 
-# Remove a definition
-undefine = (name) ->
-  delete definitions[name]
+dict = new Dictionary()
 
 # Recursively inherit defintions
 mergeKeys = (a, b) ->
@@ -17,62 +15,48 @@ mergeKeys = (a, b) ->
     details.keys[k] = v for k, v of b.keys when not a.keys[k]?
 
   if b.inherit
-    details.keys = mergeKeys details, definitions[b.inherit].details
+    details.keys = mergeKeys details, dict.get(b.inherit).details
 
   return details.keys
 
-getDef = (name) ->
-  def = definitions[name]
-  if not def then throw new Error('Could not find definition: ' + name)
-  return def
 
-# Get a definition
-getDefFn = (name) ->
-  def = definitions[name]
-  if not def then return checkType(name)
-  return def.fn
-
-# Check an object is of a native type
-check = (obj, type) ->
-  return typeof obj is type
-
-# Curried version of `check`
-checkType = (type) ->
-  return (obj) -> return typeof obj is type
 
 # Create a new type definition
 define = (name, type, details) ->
 
-  if definitions[name]
-    throw new Error('Definition already defined: ' + name)
-
   # Create definition
-  def = definitions[name] =
+  def = dict.add
     name: name
     type: type
     details: details
 
+  # Raw def
+  if typeof type is 'function'
+    return def.fn = type
+
   # Get function to check type of object
-  typeCheck = getDefFn(type)
+  typeCheck = dict.get(type).fn
 
-  # Simplest definition
+  # Rename definition
   if not details
-    return def.fn = getDefFn(type)
+    return def.fn = typeCheck
 
-  # Checking function
-  if check details, 'function'
-    return def.fn = (obj) ->
-      return false unless typeCheck(obj)
-      return details(obj)
+  # Type check + custom function
+  if typeof details is 'function'
+    return def.fn = fn.check(typeCheck, details)
+
+
 
   # Check all object properties are of a certain type
-  all = details.all
-  if all then all = getDefFn(all)
+  all = null
+  if details.all
+    all = dict.get(details.all).fn
+
 
   # Checking object/array keys
   if details.keys
     for key, value of details.keys
-      details.keys[key] = getDefFn(value)
+      details.keys[key] = dict.get(value).fn
 
   keys = details.keys
 
@@ -81,7 +65,7 @@ define = (name, type, details) ->
   if typeof details.inherit is 'function'
     inherit = (obj) ->
       type = details.inherit(obj)
-      keys = mergeKeys def.details, getDef(type).details
+      keys = mergeKeys def.details, dict.get(type).details
 
       for own key, value of obj
         if keys[key]
@@ -92,7 +76,7 @@ define = (name, type, details) ->
       return true
 
   else if typeof details.inherit is 'string'
-    keys = mergeKeys def.details, getDef(details.inherit).details
+    keys = mergeKeys def.details, dict.get(details.inherit).details
 
   # Creating definition
   return def.fn = (obj) ->
@@ -112,15 +96,18 @@ define = (name, type, details) ->
 
     return true
 
+
+
+
 defineFn = (name, types...) ->
 
   args = []
   for type in types
     if type[0] is '~'
-      fn = getDefFn(type[1..])
+      fn = dict.get(type[1..]).fn
       fn.optional = true
     else
-      fn = getDefFn(type)
+      fn = dict.get(type).fn
     args.push fn
 
   return (input...) ->
@@ -137,4 +124,11 @@ defineFn = (name, types...) ->
 module.exports =
   define: define
   defineFn: defineFn
-  undefine: undefine
+  undefine: dict.remove
+
+
+# -----------------------------------------------------------------------------
+# Load Defaults
+# -----------------------------------------------------------------------------
+
+require './defaults'
