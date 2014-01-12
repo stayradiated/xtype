@@ -10,15 +10,19 @@ structure. It's goal is to be lightweight and fast.
 
 xType exposes two main functions: `define` and `defineFn`.
 
-    xtype.define(<name>, <type>, <structure>)
+```javascript
+xtype.define(<name>, <type>, <structure>)
+```
 
 - `name`: name of the definition. Can only be used once.
 - `type`: the raw type of the object, such as 'object' or 'array'
-- 'structure': an object or function that is used for validation
+- `structure`: an object or function that is used for validation
 
-    xtype.defineFn(<name>, <types...>)
+```javascript
+xtype.defineFn(<name>, <types...>)
+```
 
-- `name`: name of the function. 
+- `name`: name of the function.
 - `types`: each argument of the function is given one argument
 
 ## Definitions
@@ -26,27 +30,63 @@ xType exposes two main functions: `define` and `defineFn`.
 You use xType by creating 'definitions' that document what an object should
 consist of.
 
-    define('address', 'object', {
-        keys: {
-            street: 'string',
-            city: 'string'
-        }
-    });
+```javascript
+define('address', 'object', {
+    keys: {
+        street: 'string',
+        city: 'string'
+    }
+});
 
-    test = define('user', 'object', {
-        keys: {
-            id: 'number',
-            name: 'string',
-            address: 'address'
-        }
-    });
+test = define('user', 'object', {
+    keys: {
+        id: 'number',
+        name: 'string',
+        address: 'address'
+    }
+});
 
-    test({
-        id: 10,
-        name: 'John',
-        address: {
-            number: 27,
-            street: 'Road
-        }
-    })
+test({
+    id: 10,
+    name: 'John',
+    address: {
+        number: 27,
+        street: 'Road
+    }
+})
+```
 
+## Inheritance
+
+xType allows you to split definitions in multiple sections, so you don't have
+to repeat yourself all the time.
+
+```javascript
+define('model', 'object', {
+    keys: {
+        id: 'number',
+        name: 'string'
+    }
+});
+
+test = define('task', 'object', {
+    inherit: 'base',
+    keys: {
+        completed: 'boolean',
+        notes: 'string'
+    }
+});
+
+test({
+    id: 20,
+    name: 'Just a task',
+    completed: true,
+    notes: 'Finish xType'
+})
+````
+
+## TODO
+
+- Use native object prototypes for inheritance
+- Refactor code so it's not horrible
+- Convert coffee-script to javascript
