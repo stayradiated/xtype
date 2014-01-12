@@ -1,0 +1,32 @@
+{
+  "name": "xtype",
+  "version": "0.0.1",
+  "description": "Simple object type checking",
+  "main": "xtype.js",
+  "scripts": {
+    "test": "mocha --compilers coffee:coffee-script test",
+    "build": "coffee -o . -c source/xtype.coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stayradiated/xtype.git"
+  },
+  "keywords": [
+    "object",
+    "type",
+    "check",
+    "typeof"
+  ],
+  "author": "George Czabania",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stayradiated/xtype/issues"
+  },
+  "homepage": "https://github.com/stayradiated/xtype",
+  "devDependencies": {
+    "should": "~2.1.1"
+  },
+  "dependencies": {
+    "coffee-script": "~1.6.3"
+  }
+}
