@@ -100,7 +100,24 @@
     }
     keys = details.keys;
     inherit = null;
-    if (typeof details.inherit === 'string') {
+    if (typeof details.inherit === 'function') {
+      inherit = function(obj) {
+        type = details.inherit(obj);
+        keys = mergeKeys(def.details, getDef(type).details);
+        for (key in obj) {
+          if (!__hasProp.call(obj, key)) continue;
+          value = obj[key];
+          if (keys[key]) {
+            if (!keys[key](value)) {
+              return false;
+            }
+          } else if (!details.other) {
+            return false;
+          }
+        }
+        return true;
+      };
+    } else if (typeof details.inherit === 'string') {
       keys = mergeKeys(def.details, getDef(details.inherit).details);
     }
     return def.fn = function(obj) {
