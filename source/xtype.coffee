@@ -131,24 +131,6 @@ defineFn = (name, types...) ->
 
 
 # -----------------------------------------------------------------------------
-# Useful Definitions
-# -----------------------------------------------------------------------------
-
-ARRAY = '[object Array]'
-OBJECT = '[object Object]'
-
-# Preserve the native object type
-define '*object', 'object'
-
-# Add array type
-define 'array', 'object', (obj) ->
-  Object::toString.call(obj) is ARRAY
-
-# Override the native object type to exclude arrays
-define 'object', '*object', (obj) ->
-  Object::toString.call(obj) is OBJECT
-
-# -----------------------------------------------------------------------------
 # Exports
 # -----------------------------------------------------------------------------
 

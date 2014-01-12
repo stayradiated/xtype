@@ -56,6 +56,43 @@ test({
 })
 ```
 
+## Primitive Types
+
+xType is very flexible about what types are. So you can easily use it with
+other type validation libraries.
+
+If you supply a type and a function, they will be used to create a function
+that firsts check that an object is of that type, and if so will then check it
+against your function.
+
+```javascript
+var email = define('email', 'string', function (str) {
+    return !! str.match(/.+@.+\..+/);
+});
+
+email('john@smith.com'); // true
+email('johnsmitcom');    // false
+email(30);               // false
+email({{}});             // false
+
+
+var validator = require('validator');
+var uppercase = define('uppercase', 'string', validator.isUppercase);
+uppercase('TRUE');
+uppercase('FaLsE');
+uppercase('false');
+```
+
+You can just have a completly raw function that will do all the checking. This
+is particulary useful for combining it with other libraries that already do
+type checking for you.
+
+```javascript
+var array = define('array', function (obj) {
+    Object.prototype.toString.call(obj) === '[object Array]';
+});
+```
+
 ## Inheritance
 
 xType allows you to split definitions in multiple sections, so you don't have
