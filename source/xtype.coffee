@@ -3,32 +3,35 @@ fn = require './fn'
 
 dict = new Dictionary()
 
-# Recursively inherit defintions
-mergeKeys = (a, b) ->
+clone = (from) ->
+  to = {}
+  to[k] = v for k, v of from
+  return to
 
-  details = keys: {}
+inheritType = (obj, type) ->
+  type = dict.get(type)
+  obj.__proto__ = type.options.keys
 
-  if a.keys
-    details.keys[k] = v for k, v of a.keys
+###
+ * Define
+ *
+ * Create a new type definition
+ *
+ * - name (string)
+ * - type (string)
+ * - options (object)
+ *
+ * - type (function)
+ * - options (function)
+###
 
-  if b.keys
-    details.keys[k] = v for k, v of b.keys when not a.keys[k]?
-
-  if b.inherit
-    details.keys = mergeKeys details, dict.get(b.inherit).details
-
-  return details.keys
-
-
-
-# Create a new type definition
-define = (name, type, details) ->
+define = (name, type, options) ->
 
   # Create definition
   def = dict.add
     name: name
     type: type
-    details: details
+    options: options
 
   # Raw def
   if typeof type is 'function'
@@ -38,66 +41,72 @@ define = (name, type, details) ->
   typeCheck = dict.get(type).fn
 
   # Rename definition
-  if not details
+  if not options
     return def.fn = typeCheck
 
   # Type check + custom function
-  if typeof details is 'function'
-    return def.fn = fn.check(typeCheck, details)
-
-
+  if typeof options is 'function'
+    return def.fn = fn.custom typeCheck, options
 
   # Check all object properties are of a certain type
-  all = null
-  if details.all
-    all = dict.get(details.all).fn
+  if options.all
+    return def.fn = fn.single typeCheck, dict.get(options.all).fn
 
+
+  # -----
+
+  keys = options.keys
+
+  # You must have keys if you want to come this far
+  # TODO: Figure out a better way to handle this
+  if not keys
+    throw new Error 'Keys are not specified for: ' + name
 
   # Checking object/array keys
-  if details.keys
-    for key, value of details.keys
-      details.keys[key] = dict.get(value).fn
+  for key, value of keys
+    keys[key] = dict.get(value).fn
 
-  keys = details.keys
+  # -----
+
 
   # Inheriting properties from other definitions
-  inherit = null
-  if typeof details.inherit is 'function'
-    inherit = (obj) ->
-      type = details.inherit(obj)
-      keys = mergeKeys def.details, dict.get(type).details
+  typeofInherit = typeof options.inherit
 
-      for own key, value of obj
-        if keys[key]
-          return false unless keys[key](value)
-        else if not details.other
-          return false
+  switch typeofInherit
 
-      return true
+    when 'undefined'
+      if options.other
+        return def.fn = fn.flexible typeCheck, keys
+      else
+        return def.fn = fn.strict typeCheck, keys
 
-  else if typeof details.inherit is 'string'
-    keys = mergeKeys def.details, dict.get(details.inherit).details
+    when 'string'
+      inheritType keys, options.inherit
+      if options.other
+        return def.fn = fn.flexible typeCheck, keys
+      else
+        return def.fn = fn.strict typeCheck, keys
+
+    when 'object'
+      inherit = {}
+      for own key, value of options.inherit
+        inherit[key] = clone(keys)
+        inheritType inherit[key], value
+      check = options.switch
 
   # Creating definition
-  return def.fn = (obj) ->
-    return false unless typeCheck obj
-
-    if inherit then return false unless inherit(obj)
-
-    for own key, value of obj
-
-      if all
-        return false unless all(value)
-      else if keys
-        if keys[key]
-          return false unless keys[key](value)
-        else if not details.other
-          return false
-
-    return true
+  if options.other
+    return def.fn = fn.inherit.flexible(typeCheck, inherit, check)
+  else
+    return def.fn = fn.inherit.strict(typeCheck, inherit, check)
 
 
-
+###
+ * Define Function
+ *
+ * - name (string)
+ * - types... (string)
+###
 
 defineFn = (name, types...) ->
 

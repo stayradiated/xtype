@@ -27,12 +27,12 @@ describe 'Validation', ->
 
       test = define 'native_type', 'number'
 
-      test(38).should.be.true
-      test(-1).should.be.true
+      test(38).should.equal true
+      test(-1).should.equal true
 
-      test('').should.be.false
-      test({}).should.be.false
-      test([]).should.be.false
+      test('').should.equal false
+      test({}).should.equal false
+      test([]).should.equal false
 
 
     it 'should not allow definitions to reuse the same name', ->
@@ -47,26 +47,26 @@ describe 'Validation', ->
 
       test = define 'test', 'int'
 
-      test(20).should.be.true
-      test('string').should.be.false
+      test(20).should.equal true
+      test('string').should.equal false
 
 
     it 'should know the difference between an object and an array', ->
 
       test = define 'array_test', 'array'
 
-      test([]).should.be.true
-      test({}).should.be.false
+      test([]).should.equal true
+      test({}).should.equal false
 
       test = define 'object_test', 'object'
 
-      test({}).should.be.true
-      test([]).should.be.false
+      test({}).should.equal true
+      test([]).should.equal false
 
       test = define 'native_object', '*object'
 
-      test({}).should.be.true
-      test([]).should.be.true
+      test({}).should.equal true
+      test([]).should.equal true
 
 
     it 'should define a basic object', ->
@@ -80,22 +80,22 @@ describe 'Validation', ->
       test({
         id: 20
         name: 'A string'
-      }).should.be.true
+      }).should.equal true
 
       # Partial properties
-      test({ id: 10 }).should.be.true
-      test({ name: 'word' }).should.be.true
+      test({ id: 10 }).should.equal true
+      test({ name: 'word' }).should.equal true
 
       # Objects vs arrays
-      test([]).should.be.false
-      test({}).should.be.true
+      test([]).should.equal false
+      test({}).should.equal true
 
       # Extra properties should mark it as invalid
       test({
         id: 30
         name: 'test'
         other: 'prop'
-      }).should.be.false
+      }).should.equal false
 
 
     it 'should allow excess keys', ->
@@ -109,17 +109,17 @@ describe 'Validation', ->
       test({
         id: 20
         name: 'name'
-      }).should.be.true
+      }).should.equal true
 
       test({
         id: 20
         name: 'name'
         random: true
-      }).should.be.true
+      }).should.equal true
 
       test({
         notevenclose: 'amazing'
-      }).should.be.true
+      }).should.equal true
 
     it 'should inherit properties from other definitions', ->
 
@@ -145,7 +145,7 @@ describe 'Validation', ->
         width: 20
         height: 30
         color: 'red'
-      }).should.be.true
+      }).should.equal true
 
 
     it 'should override inherited properties', ->
@@ -171,13 +171,13 @@ describe 'Validation', ->
         id: 's20'
         name: ['test']
         list: 30
-      }).should.be.true
+      }).should.equal true
 
       test({
         id: 20
         list: 'c20'
         name: 'fail'
-      }).should.be.false
+      }).should.equal false
 
 
    it 'should test indexes of an array', ->
@@ -187,8 +187,8 @@ describe 'Validation', ->
          0: 'string'
          1: 'number'
 
-      test(['a string', 20]).should.be.true
-      test([20, 'string']).should.be.false
+      test(['a string', 20]).should.equal true
+      test([20, 'string']).should.equal false
 
 
     it 'should inherit with arrays', ->
@@ -207,7 +207,7 @@ describe 'Validation', ->
         keys:
           2: 'object'
 
-      test([20, 'word', {}]).should.be.true
+      test([20, 'word', {}]).should.equal true
 
 
     it 'should be able to use custom child classes', ->
@@ -224,11 +224,11 @@ describe 'Validation', ->
 
       test({
         name: 'word'
-      }).should.be.true
+      }).should.equal true
 
       test({
         name: 20
-      }).should.be.false
+      }).should.equal false
 
       test({
         name: 'A name'
@@ -236,26 +236,26 @@ describe 'Validation', ->
           id: 20
           name: 'no'
         }
-      }).should.be.true
+      }).should.equal true
 
       test({
         child: {
           name: 30
         }
-      }).should.be.false
+      }).should.equal false
 
       test({
         child:
           random: false
-      }).should.be.false
+      }).should.equal false
 
     it 'should use a custom function to check', ->
 
       test = define 'test_fn', 'number', (obj) -> 10 < obj < 20
 
-      test(15).should.be.true
-      test(10).should.be.false
-      test(20).should.be.false
+      test(15).should.equal true
+      test(10).should.equal false
+      test(20).should.equal false
 
     it 'should check all properties of an object', ->
 
@@ -266,22 +266,22 @@ describe 'Validation', ->
         id: 30
         height: 20
         width: 10
-      }).should.be.true
+      }).should.equal true
 
       test({
         id: 30
         height: 20
         width: 10
         name: 'string'
-      }).should.be.false
+      }).should.equal false
 
     it 'should check all properties of an array', ->
 
       test = define 'array_strings', 'array',
         all: 'string'
 
-      test(['a', 'short', 'story']).should.be.true
-      test([10, 'short', 'stories']).should.be.false
+      test(['a', 'short', 'story']).should.equal true
+      test([10, 'short', 'stories']).should.equal false
 
     it 'should have on-the-fly inheritance', ->
 
@@ -300,26 +300,23 @@ describe 'Validation', ->
       test = define 'model', 'array',
         keys:
           0: 'number'
-        inherit: (obj) ->
-          switch obj[0]
-            when 0
-              return 'thing_1'
-            when 1
-              return 'thing_2'
-            when 2
-              return 'thing_3'
+        inherit: ['thing_1', 'thing_2', 'thing_3']
+        switch: (obj) ->
+          num = obj[0]
+          return false unless 0 <= num <= 2
+          return num
 
-      test([0, 'word']).should.be.true
-      test([0, []]).should.be.false
-      test([0, {}]).should.be.false
+      test([0, 'word']).should.equal true
+      test([0, []]).should.equal false
+      test([0, {}]).should.equal false
 
-      test([1, 'word']).should.be.false
-      test([1, []]).should.be.true
-      test([1, {}]).should.be.false
+      test([1, 'word']).should.equal false
+      test([1, []]).should.equal true
+      test([1, {}]).should.equal false
 
-      test([2, 'word']).should.be.false
-      test([2, []]).should.be.false
-      test([2, {}]).should.be.true
+      test([2, 'word']).should.equal false
+      test([2, []]).should.equal false
+      test([2, {}]).should.equal true
 
   describe '[defineFn]', ->
 
@@ -331,19 +328,19 @@ describe 'Validation', ->
 
       fn = defineFn 'fn', 'number', 'string', 'object'
 
-      fn(20, 'word', {}).should.be.true
-      fn(10, 'adjective', new Object()).should.be.true
-      fn(30, 'verb', {}, []).should.be.true
+      fn(20, 'word', {}).should.equal true
+      fn(10, 'adjective', new Object()).should.equal true
+      fn(30, 'verb', {}, []).should.equal true
 
-      fn().should.be.false
-      fn('nah').should.be.false
-      fn(5, 'noun').should.be.false
+      fn().should.equal false
+      fn('nah').should.equal false
+      fn(5, 'noun').should.equal false
 
     it 'should have optional arguments', ->
 
       fn = defineFn 'fn', 'string', '~function'
 
-      fn('verb', ->).should.be.true
-      fn('verb').should.be.true
+      fn('verb', ->).should.equal true
+      fn('verb').should.equal true
 
-      fn('verb', 20).should.be.false
+      fn('verb', 20).should.equal false
