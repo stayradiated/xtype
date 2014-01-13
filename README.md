@@ -11,12 +11,12 @@ structure. It's goal is to be lightweight and fast.
 xType exposes two main functions: `define` and `defineFn`.
 
 ```javascript
-xtype.define(<name>, <type>, <structure>)
+xtype.define(<name>, <type>, <options>)
 ```
 
 - `name`: name of the definition. Can only be used once.
 - `type`: the raw type of the object, such as 'object' or 'array'
-- `structure`: an object or function that is used for validation
+- `options`: an object or function that is used for validation
 
 ```javascript
 xtype.defineFn(<name>, <types...>)
@@ -54,6 +54,78 @@ test({
         street: 'Road
     }
 })
+```
+
+## Options
+
+
+### Keys
+
+Keys allow you to specify what keys an object can have to be valid. If the type
+does not match, or if an object has a key that is not in 'keys', then it will
+return false.
+
+```javascript
+test = define('special_object', 'object', {
+    keys: {
+        id: 'number'
+        name: 'string'
+    }
+});
+
+test({ id: 10, name: 'word' }); // true
+test({ id: 'word', name: 10 }); // false
+
+test = define('special_array', 'array', {
+    keys: {
+        0: 'number',
+        1: 'string'
+    }
+});
+
+test([10, 'word']); // true
+test(['word', 10]); // false
+```
+
+### Other
+
+Other makes the test more flexible - meaning that it will ignore any properties
+on an object that
+
+```javascript
+test = define('standard', 'object', {
+    keys: {
+        id: 'number'
+    }
+});
+
+test({ id: 20, name: 'word' }); // false
+
+test = define('flexible', 'object, {
+    other: true,
+    keys: {
+        id: 'number'
+    }
+});
+
+test({ id: 20, name: 'word' }); // true
+```
+
+
+### All
+
+Setting options.all means that all properties of the object must be that type.
+
+This can only be used by itself, and cannot be used with 'keys', 'other' or
+'inheritance'.
+
+```javascript
+test = define('array_of_strings', 'array', {
+    all: 'string'
+});
+
+test(['an', 'array', 'of', 'strings']); // true
+test([1, 2, 3, 4, 5]); // false
 ```
 
 ## Primitive Types
@@ -149,12 +221,11 @@ list({
         }
     ]
 }); // true
-
-
 ````
 
-## TODO
+## Todo
 
-- Use native object prototypes for inheritance
-- Refactor code so it's not horrible
-- Convert coffee-script to javascript
+- [x] Use native object prototypes for inheritance
+- [ ] Write more tests
+- [ ] Refactor code so it's not horrible
+- [ ] Convert coffee-script to javascript

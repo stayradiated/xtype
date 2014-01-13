@@ -76,6 +76,12 @@ module.exports =
       return true
 
 
+  ###
+   * Inherit
+   *
+   * These functions use different sets of keys depending on the outcome of the
+   * 'check' function.
+  ###
 
   inherit:
 
