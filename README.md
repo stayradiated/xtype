@@ -101,7 +101,7 @@ test = define('standard', 'object', {
 
 test({ id: 20, name: 'word' }); // false
 
-test = define('flexible', 'object, {
+test = define('flexible', 'object', {
     other: true,
     keys: {
         id: 'number'
