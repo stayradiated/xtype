@@ -134,3 +134,14 @@ module.exports =
 
         return true
 
+  ###
+   * Inheriting an on the fly function
+   *
+   * A special breed of the 'inherit' functions that inherit from definitions
+   * that also use on-the-fly functions.
+  ###
+
+  inheritFn:
+
+    strict: ->
+

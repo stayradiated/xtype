@@ -10,6 +10,10 @@ clone = (from) ->
 
 inheritType = (obj, type) ->
   type = dict.get(type)
+
+  if typeof type.options.inherit is 'object'
+    console.log 'Aahh! Cannot handle inheriting this!'
+
   obj.__proto__ = type.options.keys
 
 ###

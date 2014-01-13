@@ -164,19 +164,18 @@ describe 'Validation', ->
       test = define 'model_3', 'object',
         inherit: 'model_2'
         keys:
-          name: 'array'
           list: 'number'
 
       test({
         id: 's20'
-        name: ['test']
+        name: 'test'
         list: 30
       }).should.equal true
 
       test({
         id: 20
         list: 'c20'
-        name: 'fail'
+        name: ['fail']
       }).should.equal false
 
 
@@ -317,6 +316,38 @@ describe 'Validation', ->
       test([2, 'word']).should.equal false
       test([2, []]).should.equal false
       test([2, {}]).should.equal true
+
+    it 'should inherit a definitions with on-the-fly inheritance', ->
+
+      define 'base_1', 'object',
+        keys:
+          string: 'string'
+
+      define 'base_2', 'object',
+        keys:
+          number: 'number'
+
+      define 'on-the-fly', 'object',
+        keys:
+          array: 'array'
+        inherit: ['base_1', 'base_2']
+        switch: (obj) ->
+          if obj.use_base_1
+            return 0
+          if obj.use_base_2
+            return 1
+
+      test = define 'model_1', 'object',
+        keys:
+          id: 'number'
+        inherit: 'on-the-fly'
+
+      test({
+        id: 20
+        array: []
+        # number: 30
+        # use_base_2: true
+      }).should.be.true
 
   describe '[defineFn]', ->
 
