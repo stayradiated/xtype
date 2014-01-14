@@ -3,18 +3,11 @@ fn = require './fn'
 
 dict = new Dictionary()
 
-clone = (from) ->
-  to = {}
-  to[k] = v for k, v of from
-  return to
-
-inheritType = (obj, type) ->
-  type = dict.get(type)
-
-  if typeof type.options.inherit is 'object'
-    console.log 'Aahh! Cannot handle inheriting this!'
-
-  obj.__proto__ = type.options.keys
+global.log = (obj) ->
+  console.log '\n{'
+  for key, value of obj
+    console.log "  #{ key }: #{ typeof value }"
+  console.log '}\n'
 
 ###
  * Define
@@ -85,24 +78,42 @@ define = (name, type, options) ->
         return def.fn = fn.strict typeCheck, keys
 
     when 'string'
-      inheritType keys, options.inherit
-      if options.other
-        return def.fn = fn.flexible typeCheck, keys
+      inheriting = dict.get options.inherit
+
+      if inheriting.options.keys
+        keys.__proto__ = inheriting.options.keys
+
+      log(keys)
+
+      if inheriting.inheritFn
+        def.inheritFn = inheriting.inheritFn
+
+        return def.fn = fn.special typeCheck, keys, def.inheritFn
+
       else
-        return def.fn = fn.strict typeCheck, keys
+
+        if options.other
+          return def.fn = fn.flexible typeCheck, keys
+        else
+          return def.fn = fn.strict typeCheck, keys
 
     when 'object'
       inherit = {}
       for own key, value of options.inherit
-        inherit[key] = clone(keys)
-        inheritType inherit[key], value
+        inherit[key] = dict.get(value)
       check = options.switch
+
+  console.log 'check', typeof check
+
+  # Create a function that will test the obj against check
+  # and then get the result from the inherit object
+  def.inheritFn = fn.inheritFn(keys, inherit, check)
 
   # Creating definition
   if options.other
-    return def.fn = fn.inherit.flexible(typeCheck, inherit, check)
+    return def.fn = fn.inherit.flexible(typeCheck, keys, def.inheritFn)
   else
-    return def.fn = fn.inherit.strict(typeCheck, inherit, check)
+    return def.fn = fn.inherit.strict(typeCheck, keys, def.inheritFn)
 
 
 ###

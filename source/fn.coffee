@@ -94,14 +94,11 @@ module.exports =
      * - check (function)
     ###
 
-    strict: (type, inherit, check) ->
+    strict: (type, keys, inheritFn) ->
       return (obj) ->
         return false unless type(obj)
 
-        index = check(obj)
-        return false if index is false
-
-        keys = inherit[index]
+        keys.__proto__ = inheritFn(obj).options.keys
 
         for own key, value of obj
           fn = keys[key]
@@ -118,14 +115,11 @@ module.exports =
      * - check (function)
     ###
 
-    flexible: (type, inherit, check) ->
+    flexible: (type, keys, inheritFn) ->
       return (obj) ->
         return false unless type(obj)
 
-        index = check(obj)
-        return false if index is false
-
-        keys = inherit[index]
+        keys.__proto__ = inheritFn(obj).options.keys
 
         for own key, value of obj
           fn = keys[key]
@@ -134,6 +128,21 @@ module.exports =
 
         return true
 
+
+  ###
+   * Inherit Checking Function
+   *
+   * - inherit (object)
+   * - check (function
+  ###
+
+  inheritFn: (keys, inherit, check) ->
+    return (obj) ->
+      index = check(obj)
+      return false if index is false
+      keys.__proto__ = inherit[index].options.keys
+
+
   ###
    * Inheriting an on the fly function
    *
@@ -141,7 +150,13 @@ module.exports =
    * that also use on-the-fly functions.
   ###
 
-  inheritFn:
+  special: (type, keys, inheritFn) ->
 
-    strict: ->
-
+    return (obj) ->
+      return false unless type(obj)
+      inheritFn(obj)
+      for own key, value of obj
+        fn = keys[key]
+        return false unless fn
+        return false unless fn(value)
+      return true

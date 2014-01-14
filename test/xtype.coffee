@@ -317,37 +317,37 @@ describe 'Validation', ->
       test([2, []]).should.equal false
       test([2, {}]).should.equal true
 
-    it 'should inherit a definitions with on-the-fly inheritance', ->
+    # it 'should inherit a definitions with on-the-fly inheritance', ->
 
-      define 'base_1', 'object',
-        keys:
-          string: 'string'
+    #   define 'base_1', 'object',
+    #     keys:
+    #       string: 'string'
 
-      define 'base_2', 'object',
-        keys:
-          number: 'number'
+    #   define 'base_2', 'object',
+    #     keys:
+    #       number: 'number'
 
-      define 'on-the-fly', 'object',
-        keys:
-          array: 'array'
-        inherit: ['base_1', 'base_2']
-        switch: (obj) ->
-          if obj.use_base_1
-            return 0
-          if obj.use_base_2
-            return 1
+    #   define 'on-the-fly', 'object',
+    #     keys:
+    #       array: 'array'
+    #     inherit: ['base_1', 'base_2']
+    #     switch: (obj) ->
+    #       if obj.use_base_1
+    #         return 0
+    #       if obj.use_base_2
+    #         return 1
 
-      test = define 'model_1', 'object',
-        keys:
-          id: 'number'
-        inherit: 'on-the-fly'
+    #   test = define 'model_1', 'object',
+    #     keys:
+    #       id: 'number'
+    #     inherit: 'on-the-fly'
 
-      test({
-        id: 20
-        array: []
-        # number: 30
-        # use_base_2: true
-      }).should.be.true
+    #   test({
+    #     id: 20
+    #     array: []
+    #     # number: 30
+    #     # use_base_2: true
+    #   }).should.be.true
 
   describe '[defineFn]', ->
 
