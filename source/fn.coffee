@@ -77,6 +77,22 @@ module.exports =
 
 
   ###
+   * Set Prototype for Inheritance
+   *
+   * - keys (object) : keys to set prototype of
+   * - inherit (object) : possible objects to be the prototype
+   * - check (function) : function that decides which object to use
+  ###
+
+  setPrototype: (keys, inherit, check) ->
+    return (obj) ->
+      index = check(obj)
+      return false if index is false
+      return false unless inherit.hasOwnProperty(index)
+      keys.__proto__ = inherit[index].options.keys
+
+
+  ###
    * Inherit
    *
    * These functions use different sets of keys depending on the outcome of the
@@ -98,12 +114,13 @@ module.exports =
       return (obj) ->
         return false unless type(obj)
 
-        keys.__proto__ = inheritFn(obj).options.keys
+        inheritFn(obj)
 
         for own key, value of obj
           fn = keys[key]
           return false unless fn
           return false unless fn(value)
+
         return true
 
 
@@ -119,7 +136,7 @@ module.exports =
       return (obj) ->
         return false unless type(obj)
 
-        keys.__proto__ = inheritFn(obj).options.keys
+        inheritFn(obj)
 
         for own key, value of obj
           fn = keys[key]
@@ -127,36 +144,3 @@ module.exports =
             return false unless fn(value)
 
         return true
-
-
-  ###
-   * Inherit Checking Function
-   *
-   * - inherit (object)
-   * - check (function
-  ###
-
-  inheritFn: (keys, inherit, check) ->
-    return (obj) ->
-      index = check(obj)
-      return false if index is false
-      keys.__proto__ = inherit[index].options.keys
-
-
-  ###
-   * Inheriting an on the fly function
-   *
-   * A special breed of the 'inherit' functions that inherit from definitions
-   * that also use on-the-fly functions.
-  ###
-
-  special: (type, keys, inheritFn) ->
-
-    return (obj) ->
-      return false unless type(obj)
-      inheritFn(obj)
-      for own key, value of obj
-        fn = keys[key]
-        return false unless fn
-        return false unless fn(value)
-      return true

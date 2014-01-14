@@ -65,6 +65,8 @@ define = (name, type, options) ->
 
   # -----
 
+  # Set method to use
+  method = if options.other then 'flexible' else 'strict'
 
   # Inheriting properties from other definitions
   typeofInherit = typeof options.inherit
@@ -72,10 +74,7 @@ define = (name, type, options) ->
   switch typeofInherit
 
     when 'undefined'
-      if options.other
-        return def.fn = fn.flexible typeCheck, keys
-      else
-        return def.fn = fn.strict typeCheck, keys
+      return def.fn = fn[method](typeCheck, keys)
 
     when 'string'
       inheriting = dict.get options.inherit
@@ -83,19 +82,11 @@ define = (name, type, options) ->
       if inheriting.options.keys
         keys.__proto__ = inheriting.options.keys
 
-      log(keys)
-
       if inheriting.inheritFn
         def.inheritFn = inheriting.inheritFn
-
-        return def.fn = fn.special typeCheck, keys, def.inheritFn
-
+        return def.fn = fn.inherit[method](typeCheck, keys, def.inheritFn)
       else
-
-        if options.other
-          return def.fn = fn.flexible typeCheck, keys
-        else
-          return def.fn = fn.strict typeCheck, keys
+        return def.fn = fn[method](typeCheck, keys)
 
     when 'object'
       inherit = {}
@@ -103,17 +94,12 @@ define = (name, type, options) ->
         inherit[key] = dict.get(value)
       check = options.switch
 
-  console.log 'check', typeof check
-
   # Create a function that will test the obj against check
   # and then get the result from the inherit object
-  def.inheritFn = fn.inheritFn(keys, inherit, check)
+  def.inheritFn = fn.setPrototype(keys, inherit, check)
 
   # Creating definition
-  if options.other
-    return def.fn = fn.inherit.flexible(typeCheck, keys, def.inheritFn)
-  else
-    return def.fn = fn.inherit.strict(typeCheck, keys, def.inheritFn)
+  return def.fn = fn.inherit[method](typeCheck, keys, def.inheritFn)
 
 
 ###

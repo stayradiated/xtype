@@ -317,37 +317,85 @@ describe 'Validation', ->
       test([2, []]).should.equal false
       test([2, {}]).should.equal true
 
-    # it 'should inherit a definitions with on-the-fly inheritance', ->
+    it 'should have delayed on-the-fly inheritance', ->
 
-    #   define 'base_1', 'object',
-    #     keys:
-    #       string: 'string'
+      define 'd', 'object', keys: {d: 'boolean'}
+      define 'e', 'object', keys: {e: 'boolean'}
+      define 'f', 'object', keys: {f: 'boolean'}
 
-    #   define 'base_2', 'object',
-    #     keys:
-    #       number: 'number'
+      define 'c', 'object',
+        inherit: ['d', 'e', 'f']
+        keys: {c: 'number'}
+        switch: (obj) -> return obj.c
 
-    #   define 'on-the-fly', 'object',
-    #     keys:
-    #       array: 'array'
-    #     inherit: ['base_1', 'base_2']
-    #     switch: (obj) ->
-    #       if obj.use_base_1
-    #         return 0
-    #       if obj.use_base_2
-    #         return 1
+      define 'b', 'object',
+        inherit: 'c'
+        keys: {b: 'boolean'}
 
-    #   test = define 'model_1', 'object',
-    #     keys:
-    #       id: 'number'
-    #     inherit: 'on-the-fly'
+      test = define 'a', 'object',
+        inherit: 'b'
+        keys: {a: 'boolean'}
 
-    #   test({
-    #     id: 20
-    #     array: []
-    #     # number: 30
-    #     # use_base_2: true
-    #   }).should.be.true
+      test({
+        a: true
+        b: true
+        c: 0
+        d: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 1
+        e: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 2
+        f: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 3
+        g: true
+      }).should.equal false
+
+    it 'should inherit a definitions with on-the-fly inheritance', ->
+
+      define 'base_1', 'object',
+        keys: string: 'string'
+
+      define 'base_2', 'object',
+        keys: number: 'number'
+
+      define 'on-the-fly', 'object',
+        keys:
+          array: 'array'
+          use_base_2: 'boolean'
+          use_base_1: 'boolean'
+        inherit: ['base_1', 'base_2']
+        switch: (obj) ->
+          if obj.use_base_1
+            return 0
+          if obj.use_base_2
+            return 1
+          return false
+
+      test = define 'model_1', 'object',
+        keys:
+          id: 'number'
+        inherit: 'on-the-fly'
+
+      test({
+        id: 20
+        array: []
+        number: 30
+        use_base_2: true
+      }).should.be.true
 
   describe '[defineFn]', ->
 
