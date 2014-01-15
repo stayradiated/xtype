@@ -226,6 +226,6 @@ list({
 ## Todo
 
 - [x] Use native object prototypes for inheritance
-- [ ] Write more tests
-- [ ] Refactor code so it's not horrible
+- [x] Write more tests
+- [x] Refactor code so it's not horrible
 - [ ] Convert coffee-script to javascript
