@@ -1,14 +1,29 @@
 module.exports = {
 
   /*
+   * Guard
+   */
+
+  guard: function (type, fn, ctx) {
+    return function () {
+      if (type(arguments)) {
+        return fn.apply(ctx, arguments);
+      }
+      return false;
+    };
+  },
+
+  /*
    * DefineFn
+   *
+   * - args (array)
+   *
+   * - input (arguments)
    */
 
   defineFn: function (args) {
-    return function () {
-      var input, arg, i, len;
-      input = Array.prototype.slice.call(arguments);
-
+    return function (input) {
+      var arg, i, len;
       for (i = 0, len = args.length; i < len; i += 1) {
         arg = args[i];
 
@@ -132,7 +147,7 @@ module.exports = {
 
   setProto: function(keys, proto) {
     return function(obj) {
-      return keys.__proto__ = proto;
+      keys.__proto__ = proto;
     };
   },
 
@@ -149,7 +164,7 @@ module.exports = {
   setProtoChain: function(keys, proto, chain) {
     return function(obj) {
       keys.__proto__ = proto;
-      return chain(obj);
+      chain(obj);
     };
   },
 
@@ -169,7 +184,7 @@ module.exports = {
         keys.__proto__ = null;
         return false;
       }
-      return protoFns[index](obj);
+      protoFns[index](obj);
     };
   },
 

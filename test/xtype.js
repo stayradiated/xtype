@@ -8,25 +8,30 @@ defineFn = xType.defineFn;
 
 describe('[xType]', function() {
 
+  var definitions, define;
+
+  definitions = [];
+
+  define = function(name, type, details) {
+    definitions.push(name);
+    return xType.define(name, type, details);
+  };
+
+  afterEach(function() {
+    var i, len;
+    for (i = 0, len = definitions.length; i < len; i += 1) {
+      xType.undefine(definitions[i]);
+    }
+    definitions = [];
+  });
+
   describe('[define]', function() {
 
-    var definitions, define;
-
-    definitions = [];
-
-    define = function(name, type, details) {
-      definitions.push(name);
-      return xType.define(name, type, details);
-    };
-
-    afterEach(function() {
-      var i, len;
-      for (i = 0, len = definitions.length; i < len; i += 1) {
-        xType.undefine(definitions[i]);
-      }
-      definitions = [];
+    it('should run definitions', function () {
+      define('simple', 'number');
+      xType.get('simple')(30).should.equal(true);
+      xType.get('simple')('word').should.equal(false);
     });
-
 
     it('should use a pre-defined type', function() {
       var test;
@@ -506,7 +511,7 @@ describe('[xType]', function() {
     });
 
 
-    return it('should have multiple inheritance functions', function() {
+    it('should have multiple inheritance functions', function() {
       var test;
 
       define('j', 'object', { keys: { j: 'boolean' } });
@@ -603,29 +608,67 @@ describe('[xType]', function() {
   return describe('[defineFn]', function() {
 
     it('should define functions with multiple argument types', function() {
-      var fn;
+      var fn, test;
 
       fn = defineFn('fn', 'number', 'string', 'object');
+      test = function () {
+        return fn(arguments);
+      };
 
-      fn(20, 'word', {}).should.equal(true);
-      fn(10, 'adjective', Object.create(null)).should.equal(true);
-      fn(30, 'verb', {}, []).should.equal(true);
+      test(20, 'word', {}).should.equal(true);
+      test(10, 'adjective', Object.create(null)).should.equal(true);
+      test(30, 'verb', {}, []).should.equal(true);
 
-      fn().should.equal(false);
-      fn('nah').should.equal(false);
-      fn(5, 'noun').should.equal(false);
+      test().should.equal(false);
+      test('nah').should.equal(false);
+      test(5, 'noun').should.equal(false);
     });
 
-    return it('should have optional arguments', function() {
-      var fn;
+    it('should have optional arguments', function() {
+      var fn, test;
 
-      fn = defineFn('fn', 'string', '~function');
+      fn = defineFn('fn_optional', 'string', '~function');
+      test = function () {
+        return fn(arguments);
+      };
 
-      fn('verb').should.equal(true);
-      fn('verb', function() { console.log(); }).should.equal(true);
+      test('verb').should.equal(true);
+      test('verb', function() { console.log(); }).should.equal(true);
 
-      fn('verb', 20).should.equal(false);
+      test('verb', 20).should.equal(false);
     });
+
+    it('should guard functions', function () {
+
+      define('task', 'object', {
+        keys: {
+          id: 'string',
+          listId: 'string',
+          date: 'number',
+          name: 'string',
+          notes: 'string',
+          priority: 'number',
+          completed: 'boolean'
+        }
+      });
+
+      defineFn('task_create', 'task', '~function');
+
+      var task_create = function (model, callback) {
+        return true;
+      };
+
+      task_create = xType.guard('task_create', task_create);
+
+      task_create({}, function () {}).should.equal(true);
+      task_create({ id: 'c30', listId: 's30' }).should.equal(true);
+
+      task_create(null).should.equal(false);
+      task_create({}, null).should.equal(false);
+      task_create({ date: 'string' }).should.equal(false);
+
+    });
+
   });
 });
 

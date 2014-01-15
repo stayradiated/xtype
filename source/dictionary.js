@@ -21,8 +21,7 @@ Dictionary.prototype.get = function(name) {
   return def;
 };
 
-Dictionary.prototype.add = function(obj) {
-  var name = obj.name;
+Dictionary.prototype.add = function(name, obj) {
   if (this.definitions[name]) {
     throw new Error('Definition already defined: ' + name);
   }

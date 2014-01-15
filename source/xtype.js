@@ -1,17 +1,10 @@
-var Dictionary, define, defineFn, dict, fn;
+var Dictionary, define, functions, defineFn, dict, func, get, getFn;
 
 Dictionary = require('./dictionary');
-fn = require('./fn');
+func = require('./fn');
 
 dict = new Dictionary();
-
-/*
- * Test
- */
-
-test = function (type, obj) {
-  return dict.get(type).fn(obj);
-};
+functions = new Dictionary();
 
 /*
  * Define
@@ -31,8 +24,7 @@ define = function (name, type, options) {
   var def, key, keys, method, propType, proto, protoFn, protoFns, protoKeys, typeCheck, value, _ref;
 
   // Create a new definition in the dictionary
-  def = dict.add({
-    name: name,
+  def = dict.add(name, {
     type: type,
     options: options
   });
@@ -54,14 +46,14 @@ define = function (name, type, options) {
 
   // If options is a function, use that to check the object
   if (typeof options === 'function') {
-    def.fn = fn.custom(typeCheck, options);
+    def.fn = func.custom(typeCheck, options);
     return def.fn;
   }
 
   // Check each property of the object to match options.all
   if (options.all) {
     propType = dict.get(options.all).fn;
-    def.fn = fn.single(typeCheck, propType);
+    def.fn = func.single(typeCheck, propType);
     return def.fn;
   }
 
@@ -81,7 +73,7 @@ define = function (name, type, options) {
 
     // No inheritance
     case 'undefined':
-      def.fn = fn[method](typeCheck, keys);
+      def.fn = func[method](typeCheck, keys);
       return def.fn;
 
     // One-to-one inheritance
@@ -95,9 +87,9 @@ define = function (name, type, options) {
 
       if (protoFn) {
         def.protoFn = protoFn;
-        def.fn = fn.inherit[method](typeCheck, keys, protoFn);
+        def.fn = func.inherit[method](typeCheck, keys, protoFn);
       } else {
-        def.fn = fn[method](typeCheck, keys);
+        def.fn = func[method](typeCheck, keys);
       }
 
       return def.fn;
@@ -120,15 +112,15 @@ define = function (name, type, options) {
           protoFn = proto.protoFn;
 
           if (protoFn) {
-            protoFns[key] = fn.setProtoChain(keys, protoKeys, protoFn);
+            protoFns[key] = func.setProtoChain(keys, protoKeys, protoFn);
           } else {
-            protoFns[key] = fn.setProto(keys, protoKeys);
+            protoFns[key] = func.setProto(keys, protoKeys);
           }
         }
       }
 
-      def.protoFn = fn.switchProto(keys, protoFns, options.check);
-      def.fn = fn.inherit[method](typeCheck, keys, def.protoFn);
+      def.protoFn = func.switchProto(keys, protoFns, options.check);
+      def.fn = func.inherit[method](typeCheck, keys, def.protoFn);
 
       return def.fn;
   }
@@ -145,9 +137,11 @@ define = function (name, type, options) {
 
 
 defineFn = function (name) {
-  var typeFn, args, type, types, i, len;
+  var def, typeFn, args, type, types, i, len;
 
-  if (arguments.length >= 2) {
+  def = functions.add(name, {});
+
+  if (arguments.length >= 2)  {
     types = Array.prototype.slice.call(arguments, 1);
   } else {
     types = [];
@@ -168,11 +162,46 @@ defineFn = function (name) {
     args.push(typeFn);
   }
 
-  return fn.defineFn(args);
+  def.fn = func.defineFn(args);
+  return def.fn;
+};
+
+
+/*
+ * Get
+ *
+ * - type (string)
+ */
+
+get = function (type) {
+  return dict.get(type).fn;
+};
+
+
+/*
+ * GetFn
+ *
+ * - name (string)
+ */
+
+getFn = function (name) {
+  return functions.get(name).fn;
+};
+
+
+/*
+ * Guard
+ */
+
+guard = function (name, callback, context) {
+  var def = getFn(name);
+  return func.guard(def, callback, context || this)
 };
 
 module.exports = {
-  test: test,
+  get: get,
+  getFn: getFn,
+  guard: guard,
   define: define,
   defineFn: defineFn,
   undefine: dict.remove
