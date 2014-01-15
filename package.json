@@ -1,6 +1,6 @@
 {
   "name": "xtype",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Simple object type checking",
   "main": "xtype.js",
   "scripts": {
