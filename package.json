@@ -4,7 +4,7 @@
   "description": "Simple object type checking",
   "main": "xtype.js",
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script test",
+    "test": "mocha test",
     "build": "coffee -o . -c source/xtype.coffee"
   },
   "repository": {
