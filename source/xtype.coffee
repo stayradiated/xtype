@@ -47,59 +47,73 @@ define = (name, type, options) ->
 
   # Check all object properties are of a certain type
   if options.all
-    return def.fn = fn.single typeCheck, dict.get(options.all).fn
-
+    propType = dict.get(options.all).fn
+    return def.fn = fn.single(typeCheck, propType)
 
   # -----
 
-  keys = options.keys
+  keys = options.keys ?= {}
 
-  # You must have keys if you want to come this far
-  # TODO: Figure out a better way to handle this
-  if not keys
-    throw new Error 'Keys are not specified for: ' + name
-
-  # Checking object/array keys
+  # Replace key values with actual functions
   for key, value of keys
     keys[key] = dict.get(value).fn
 
   # -----
 
-  # Set method to use
+  # Select a method to use
   method = if options.other then 'flexible' else 'strict'
 
-  # Inheriting properties from other definitions
-  typeofInherit = typeof options.inherit
+  # -----
 
-  switch typeofInherit
+  # Inheriting properties from other definitions
+  switch typeof options.inherit
 
     when 'undefined'
       return def.fn = fn[method](typeCheck, keys)
 
+    # -----
+
     when 'string'
-      inheriting = dict.get options.inherit
+      proto = dict.get(options.inherit)
+      protoKeys = proto.options.keys
+      protoFn = proto.protoFn
 
-      if inheriting.options.keys
-        keys.__proto__ = inheriting.options.keys
+      keys.__proto__ = protoKeys
 
-      if inheriting.inheritFn
-        def.inheritFn = inheriting.inheritFn
-        return def.fn = fn.inherit[method](typeCheck, keys, def.inheritFn)
+      if protoFn
+        def.protoFn = protoFn
+        return def.fn = fn.inherit[method](typeCheck, keys, protoFn)
       else
         return def.fn = fn[method](typeCheck, keys)
 
+    # -----
+
     when 'object'
-      inherit = {}
+
+      unless options.switch
+        throw new Error('Must specify switch fn if inherit is an object: ' + name)
+
+      protoFns = {}
+
       for own key, value of options.inherit
-        inherit[key] = dict.get(value)
-      check = options.switch
 
-  # Create a function that will test the obj against check
-  # and then get the result from the inherit object
-  def.inheritFn = fn.setPrototype(keys, inherit, check)
+        proto = dict.get(value)
+        protoKeys = proto.options.keys
+        protoFn = proto.protoFn
 
-  # Creating definition
-  return def.fn = fn.inherit[method](typeCheck, keys, def.inheritFn)
+        if protoFn
+          protoFns[key] = fn.setProtoChain(keys, protoKeys, protoFn)
+        else
+          protoFns[key] = fn.setProto(keys, protoKeys)
+
+      # Create a function that will test the input against options.switch
+      # and then execute the result from the protoFns object
+      def.protoFn = fn.switchProto(protoFns, options.switch)
+
+      # Creating definition
+      return def.fn = fn.inherit[method](typeCheck, keys, def.protoFn)
+
+  throw new Error('Could not read options')
 
 
 ###

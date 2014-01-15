@@ -1,7 +1,7 @@
 should = require 'should'
 {define, defineFn, undefine} = require '../source/xtype'
 
-describe 'Validation', ->
+describe '[xType]', ->
 
   definitions = []
   functions = []
@@ -179,12 +179,12 @@ describe 'Validation', ->
       }).should.equal false
 
 
-   it 'should test indexes of an array', ->
+    it 'should test indexes of an array', ->
 
-     test = define 'test_array', 'array',
-       keys:
-         0: 'string'
-         1: 'number'
+      test = define 'test_array', 'array',
+        keys:
+          0: 'string'
+          1: 'number'
 
       test(['a string', 20]).should.equal true
       test([20, 'string']).should.equal false
@@ -364,38 +364,100 @@ describe 'Validation', ->
         g: true
       }).should.equal false
 
-    it 'should inherit a definitions with on-the-fly inheritance', ->
+    it 'should have multiple inheritance functions', ->
 
-      define 'base_1', 'object',
-        keys: string: 'string'
+      define 'j', 'object',
+        keys: j: 'boolean'
 
-      define 'base_2', 'object',
-        keys: number: 'number'
+      define 'i', 'object',
+        keys: i: 'boolean'
 
-      define 'on-the-fly', 'object',
-        keys:
-          array: 'array'
-          use_base_2: 'boolean'
-          use_base_1: 'boolean'
-        inherit: ['base_1', 'base_2']
-        switch: (obj) ->
-          if obj.use_base_1
-            return 0
-          if obj.use_base_2
-            return 1
-          return false
+      define 'h', 'object',
+        keys: h: 'boolean'
 
-      test = define 'model_1', 'object',
-        keys:
-          id: 'number'
-        inherit: 'on-the-fly'
+      define 'g', 'object',
+        keys: g: 'boolean'
+
+      define 'f', 'object',
+        keys: f: 'number'
+        inherit: ['i', 'j']
+        switch: (obj) -> return obj.f
+
+      define 'e', 'object',
+        keys: e: 'boolean'
+
+      define 'd', 'object',
+        keys: d: 'number'
+        inherit: ['g', 'h']
+        switch: (obj) -> return obj.d
+
+      define 'c', 'object',
+        keys: c: 'number'
+        inherit: ['d', 'e', 'f']
+        switch: (obj) -> return obj.c
+
+      define 'b', 'object',
+        inherit: 'c',
+        keys: b: 'boolean'
+
+      test = define 'a', 'object',
+        inherit: 'b',
+        keys: a: 'boolean'
 
       test({
-        id: 20
-        array: []
-        number: 30
-        use_base_2: true
-      }).should.be.true
+        a: true
+        b: true
+        c: 0
+        d: 0
+        g: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 0
+        d: 1
+        h: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 1
+        e: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 2
+        f: 0
+        i: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 2
+        f: 1
+        j: true
+      }).should.equal true
+
+      test({
+        a: true
+        b: true
+        c: 1
+        f: 1
+        j: true
+      }).should.equal false
+
+      test({
+        a: true
+        b: true
+        c: 0
+        d: 1
+        j: true
+      }).should.equal false
 
   describe '[defineFn]', ->
 

@@ -7,9 +7,9 @@ module.exports =
   ###
    * Custom
    *
-   * Uses a custom function with a basic typecheck
+   * Uses a custom function combined a single type check
    *
-   * - type (definition) : object type
+   * - type (function) : type checking function
    * - fn (function) : custom function to use
   ###
 
@@ -22,10 +22,10 @@ module.exports =
   ###
    * Single
    *
-   * Checks all properties of the object have the same type
+   * Checks that all properties of an object match a certain type
    *
-   * - type (definition) : object type
-   * - propType (definitions) : property type
+   * - type (function) : to test object type
+   * - propType (function) : to test object properties
   ###
 
   single: (type, propType) ->
@@ -42,8 +42,8 @@ module.exports =
    * Check that all properties in the object match against the keys.
    * Will return false if the object has a property not listed in keys.
    *
-   * - type (definitions) : object type
-   * - keys (object) : keys to check against
+   * - type (function) : to test object type
+   * - keys (object) : functions to check each property
   ###
 
   strict: (type, keys) ->
@@ -62,8 +62,8 @@ module.exports =
    * Check that all properties in the object match against the keys.
    * Will ignore properties not listed in keys.
    *
-   * - type (definitions) : object type
-   * - keys (object) : keys to check against
+   * - type (function) : to test object type
+   * - keys (object) : functions to check each property
   ###
 
   flexible: (type, keys) ->
@@ -78,25 +78,52 @@ module.exports =
 
   ###
    * Set Prototype for Inheritance
+   * Called by switchProto
    *
    * - keys (object) : keys to set prototype of
-   * - inherit (object) : possible objects to be the prototype
-   * - check (function) : function that decides which object to use
+   * - proto (object) : object to set as the prototype
   ###
 
-  setPrototype: (keys, inherit, check) ->
+  setProto: (keys, proto) ->
+    return (obj) ->
+      keys.__proto__ = proto
+
+
+  ###
+   * Set Prototype for Inheritance AND continue the chain
+   * Called by switchProto
+   *
+   * - keys (object) : keys to set prototype of
+   * - proto (object) : possible objects to be the prototype
+   * - chain (function) : runs after the prototype has been set
+  ###
+
+  setProtoChain: (keys, proto, chain) ->
+    return (obj) ->
+      keys.__proto__ = proto
+      chain(obj)
+
+
+  ###
+   * Switch prototypes for a definition using a custom function
+   *
+   * - protoFns (object) : possible prototypes to use
+   * - check (function) : to decide which prototype to use
+  ###
+
+  switchProto: (protoFns, check) ->
     return (obj) ->
       index = check(obj)
       return false if index is false
-      return false unless inherit.hasOwnProperty(index)
-      keys.__proto__ = inherit[index].options.keys
+      return false unless protoFns.hasOwnProperty(index)
+      protoFns[index](obj)
 
 
   ###
    * Inherit
    *
-   * These functions use different sets of keys depending on the outcome of the
-   * 'check' function.
+   * These functions run an seperate function called `inheritFn` that sets up
+   * the keys prototype value
   ###
 
   inherit:
@@ -105,16 +132,16 @@ module.exports =
     ###
      * Strict + Custom Inherit
      *
-     * - type (string)
-     * - inherit (array)
-     * - check (function)
+     * - type (function)
+     * - keys (object)
+     * - protoFn (array)
     ###
 
-    strict: (type, keys, inheritFn) ->
+    strict: (type, keys, protoFn) ->
       return (obj) ->
         return false unless type(obj)
 
-        inheritFn(obj)
+        protoFn(obj)
 
         for own key, value of obj
           fn = keys[key]
@@ -127,16 +154,16 @@ module.exports =
     ###
      * Flexible + Custom Inherit
      *
-     * - type (string)
-     * - inherit (array)
-     * - check (function)
+     * - type (function)
+     * - keys (object)
+     * - protoFn (array)
     ###
 
-    flexible: (type, keys, inheritFn) ->
+    flexible: (type, keys, protoFn) ->
       return (obj) ->
         return false unless type(obj)
 
-        inheritFn(obj)
+        protoFn(obj)
 
         for own key, value of obj
           fn = keys[key]
