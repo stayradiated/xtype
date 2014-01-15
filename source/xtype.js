@@ -5,6 +5,13 @@ fn = require('./fn');
 
 dict = new Dictionary();
 
+/*
+ * Test
+ */
+
+test = function (type, obj) {
+  return dict.get(type).fn(obj);
+};
 
 /*
  * Define
@@ -20,7 +27,7 @@ dict = new Dictionary();
 */
 
 
-define = function(name, type, options) {
+define = function (name, type, options) {
   var def, key, keys, method, propType, proto, protoFn, protoFns, protoKeys, typeCheck, value, _ref;
 
   // Create a new definition in the dictionary
@@ -137,7 +144,7 @@ define = function(name, type, options) {
 */
 
 
-defineFn = function(name) {
+defineFn = function (name) {
   var typeFn, args, type, types, i, len;
 
   if (arguments.length >= 2) {
@@ -165,6 +172,7 @@ defineFn = function(name) {
 };
 
 module.exports = {
+  test: test,
   define: define,
   defineFn: defineFn,
   undefine: dict.remove
