@@ -2,7 +2,7 @@
   "name": "xtype",
   "version": "0.0.5",
   "description": "Simple object type checking",
-  "main": "xtype.js",
+  "main": "source/xtype.js",
   "scripts": {
     "test": "mocha test",
     "build": "coffee -o . -c source/xtype.coffee"

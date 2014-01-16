@@ -1,7 +1,7 @@
 var Dictionary, define, functions, defineFn, dict, func, get, getFn;
 
 Dictionary = require('./dictionary');
-func = require('./fn');
+func = require('./fn_debug');
 
 dict = new Dictionary();
 functions = new Dictionary();
