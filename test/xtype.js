@@ -33,6 +33,7 @@ describe('[xType]', function() {
       xType.get('simple')('word').should.equal(false);
     });
 
+
     it('should use a pre-defined type', function() {
       var test;
 
@@ -43,6 +44,26 @@ describe('[xType]', function() {
       test('').should.equal(false);
       test({}).should.equal(false);
       test([]).should.equal(false);
+    });
+
+
+    it('should have required keys', function () {
+      var test;
+
+      test = define('required', 'object', {
+        keys: {
+          id: '*number',
+          str: 'string'
+        }
+      });
+
+      test({id: 30, str: 'word'}).should.equal(true);
+      test({id: 30}).should.equal(true);
+      test({id: 0}).should.equal(true);
+
+      test({id: 'string'}).should.equal(false);
+      test({str: 'word'}).should.equal(false);
+      test({}).should.equal(false);
     });
 
 
@@ -84,7 +105,7 @@ describe('[xType]', function() {
       test({}).should.equal(true);
       test([]).should.equal(false);
 
-      test = define('native_object', '*object');
+      test = define('native_object', '_object');
 
       test({}).should.equal(true);
       test([]).should.equal(true);
@@ -130,6 +151,21 @@ describe('[xType]', function() {
       test({ id: 'string', name: 'name' }).should.equal(false);
       test({ id: 30, name: [] }).should.equal(false);
       test({ id: 30, name: [], prop: false  }).should.equal(false);
+    });
+
+    it('should combine flexibility and required properties', function () {
+      var test;
+
+      test = define('flex_required', 'object', {
+        keys: {
+          id: '*number'
+        },
+        other: true
+      });
+
+      test({id: 10}).should.equal(true);
+      test({id: 30, random: true}).should.equal(true);
+      test({random: true}).should.equal(false);
     });
 
 
@@ -302,6 +338,23 @@ describe('[xType]', function() {
         test(['a', 'short', 'story']).should.equal(true);
         test([10, 'short', 'stories']).should.equal(false);
       });
+
+      it('should combine required props and all', function () {
+        var test;
+
+        test = define('array_strings_req', 'array', {
+          all: 'string',
+          required: [0, 1]
+        });
+
+        test(['a','b']).should.equal(true);
+        test(['a', 'b', 'c']).should.equal(true);
+
+        test(['a', 'b', 30]).should.equal(false);
+        test(['a']).should.equal(false);
+        test([]).should.equal(false);
+      });
+
     });
 
     it('should be able to use custom child classes', function() {
@@ -384,6 +437,36 @@ describe('[xType]', function() {
         width: 10,
         name: 'string'
       }).should.equal(false);
+    });
+
+    it('should combine inheritance with required properties', function () {
+      var test;
+
+      define('req_a', 'object', {
+        keys: {
+          a: '*number'
+        }
+      });
+
+      define('req_b', 'object', {
+        inherit: 'req_a',
+        keys: {
+          b: '*string'
+        }
+      });
+
+      test = define('c', 'object', {
+        inherit: 'req_b',
+        keys: {
+          c: 'boolean'
+        }
+      });
+
+      test({a: 30, b: 'str', c: true}).should.equal(true)
+      test({a: 20, b: 'str'}).should.equal(true);
+
+      test({c: false}).should.equal(false);
+      test({}).should.equal(false);
     });
 
     it('should switch inheritance per object', function() {
@@ -670,5 +753,6 @@ describe('[xType]', function() {
     });
 
   });
+
 });
 

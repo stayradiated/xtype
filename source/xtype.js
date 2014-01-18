@@ -1,7 +1,7 @@
 var Dictionary, define, functions, defineFn, dict, func, get, getFn;
 
 Dictionary = require('./dictionary');
-func = require('./fn_debug');
+func = require('./fn');
 
 dict = new Dictionary();
 functions = new Dictionary();
@@ -21,7 +21,7 @@ functions = new Dictionary();
 
 
 define = function (name, type, options) {
-  var def, key, keys, method, propType, proto, protoFn, protoFns, protoKeys, typeCheck, value, _ref;
+  var def, key, keys, method, propType, proto, protoFn, protoFns, protoKeys, typeCheck, value, req, _ref;
 
   // Create a new definition in the dictionary
   def = dict.add(name, {
@@ -50,10 +50,14 @@ define = function (name, type, options) {
     return def.fn;
   }
 
+  // Check if required has been defined
+  req = def.required = options.required ? options.required : [];
+
   // Check each property of the object to match options.all
   if (options.all) {
     propType = dict.get(options.all).fn;
-    def.fn = func.single(typeCheck, propType);
+    method = req.length ? 'single_req' : 'single';
+    def.fn = func[method](typeCheck, propType, req);
     return def.fn;
   }
 
@@ -63,17 +67,25 @@ define = function (name, type, options) {
   // Replace key values with actual functions
   for (key in keys) {
     value = keys[key];
+
+    // Required properties are prefixed with an asterisk
+    if (value[0] === '*') {
+      value = value.slice(1);
+      req.push(key);
+    }
+
     keys[key] = dict.get(value).fn;
   }
 
   // Select a method to use
-  method = options.other ? 'flexible' : 'strict';
+  method = options.other ? 'flexible' : 'basic';
 
   switch (typeof options.inherit) {
 
     // No inheritance
     case 'undefined':
-      def.fn = func[method](typeCheck, keys);
+      if (req.length) { method += '_req'; }
+      def.fn = func[method](typeCheck, keys, req);
       return def.fn;
 
     // One-to-one inheritance
@@ -85,11 +97,15 @@ define = function (name, type, options) {
       // Set prototype
       keys.__proto__ = protoKeys;
 
+      // Merge required keys
+      req = def.required = req.concat(proto.required);
+      if (req.length) { method += '_req'; }
+
       if (protoFn) {
         def.protoFn = protoFn;
-        def.fn = func.inherit[method](typeCheck, keys, protoFn);
+        def.fn = func.inherit[method](typeCheck, keys, protoFn, req);
       } else {
-        def.fn = func[method](typeCheck, keys);
+        def.fn = func[method](typeCheck, keys, req);
       }
 
       return def.fn;
@@ -120,7 +136,7 @@ define = function (name, type, options) {
       }
 
       def.protoFn = func.switchProto(keys, protoFns, options.check);
-      def.fn = func.inherit[method](typeCheck, keys, def.protoFn);
+      def.fn = func.inherit[method](typeCheck, keys, def.protoFn, req);
 
       return def.fn;
   }

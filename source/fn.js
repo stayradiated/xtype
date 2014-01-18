@@ -70,6 +70,7 @@ module.exports = {
     return function(obj) {
       var key, value;
       if (! type(obj)) { return false; }
+
       for (key in obj) {
         if (obj.hasOwnProperty(key)) {
           value = obj[key];
@@ -78,13 +79,39 @@ module.exports = {
           }
         }
       }
+
+      return true;
+    };
+  },
+
+  single_req: function(type, propType, required) {
+    var len = required.length;
+    return function(obj) {
+      var key, value;
+      if (! type(obj)) { return false; }
+
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          value = obj[key];
+          if (! propType(value)) {
+            return false;
+          }
+        }
+      }
+
+      for (i = 0; i < len; i++) {
+        if (! obj.hasOwnProperty(required[i])) {
+          return false;
+        }
+      }
+
       return true;
     };
   },
 
 
   /*
-   * Strict
+   * Basic
    *
    * Check that all properties in the object match against the keys.
    * Will return false if the object has a property not listed in keys.
@@ -93,10 +120,11 @@ module.exports = {
    * - keys (object) : functions to check each property
   */
 
-  strict: function(type, keys) {
+  basic: function(type, keys) {
     return function(obj) {
       var fn, key, value;
       if (! type(obj)) { return false; }
+
       for (key in obj) {
         if (obj.hasOwnProperty(key)) {
           value = obj[key];
@@ -104,9 +132,35 @@ module.exports = {
           if (! fn || ! fn (value)) { return false; }
         }
       }
+
       return true;
     };
   },
+
+  basic_req: function(type, keys, required) {
+    var len = required.length;
+    return function(obj) {
+      var fn, key, value, i;
+      if (! type(obj)) { return false; }
+
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          value = obj[key];
+          fn = keys[key];
+          if (! fn || ! fn (value)) { return false; }
+        }
+      }
+
+      for (i = 0; i < len; i++) {
+        if (! obj.hasOwnProperty(required[i])) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  },
+
 
 
   /*
@@ -123,6 +177,7 @@ module.exports = {
     return function(obj) {
       var fn, key, value;
       if (! type(obj)) { return false; }
+
       for (key in obj) {
         if (obj.hasOwnProperty(key)) {
           value = obj[key];
@@ -132,10 +187,36 @@ module.exports = {
           }
         }
       }
+
       return true;
     };
   },
 
+  flexible_req: function(type, keys, required) {
+    var len = required.length;
+    return function(obj) {
+      var fn, key, value;
+      if (! type(obj)) { return false; }
+
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          value = obj[key];
+          fn = keys[key];
+          if (fn && ! fn (value)) {
+            return false;
+          }
+        }
+      }
+
+      for (i = 0; i < len; i++) {
+        if (! obj.hasOwnProperty(required[i])) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  },
 
   /*
    * Set Prototype for Inheritance
@@ -207,7 +288,7 @@ module.exports = {
      * - protoFn (array)
     */
 
-    strict: function(type, keys, protoFn) {
+    basic: function(type, keys, protoFn) {
       return function(obj) {
         var fn, key, value;
         if (! type(obj)) { return false; }
@@ -223,6 +304,35 @@ module.exports = {
             }
           }
         }
+
+        return true;
+      };
+    },
+
+    basic_req: function(type, keys, protoFn, required) {
+      var len = required.length;
+      return function(obj) {
+        var fn, key, value;
+        if (! type(obj)) { return false; }
+
+        protoFn(obj);
+
+        for (key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            value = obj[key];
+            fn = keys[key];
+            if (! fn || ! fn(value)) {
+              return false;
+            }
+          }
+        }
+
+        for (i = 0; i < len; i++) {
+          if (! obj.hasOwnProperty(required[i])) {
+            return false;
+          }
+        }
+
         return true;
       };
     },
@@ -252,6 +362,36 @@ module.exports = {
             }
           }
         }
+
+        return true;
+      };
+    },
+
+
+    flexible_req: function(type, keys, protoFn, required) {
+      var len = required.length;
+      return function(obj) {
+        var fn, key, value;
+        if (! type(obj)) { return false; }
+
+        protoFn(obj);
+
+        for (key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            value = obj[key];
+            fn = keys[key];
+            if (fn && ! fn(value)) {
+              return false;
+            }
+          }
+        }
+
+        for (i = 0; i < len; i++) {
+          if (! obj.hasOwnProperty(required[i])) {
+            return false;
+          }
+        }
+
         return true;
       };
     }

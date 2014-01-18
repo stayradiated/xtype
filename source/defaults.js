@@ -29,6 +29,6 @@ define('function', function(obj) {
   return typeof obj === 'function';
 });
 
-define('*object', function(obj) {
+define('_object', function(obj) {
   return typeof obj === 'object';
 });

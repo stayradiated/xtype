@@ -6,9 +6,21 @@ xType
 xType is just a simple way to quickly validate that an object is of a certain
 structure. It's goal is to be lightweight and fast.
 
+## Notes:
+
+- You currently can't inherit required properties using a `check` function.
+
+
 ## Usage
 
-xType exposes two main functions: `define` and `defineFn`.
+xType exposes the following functions:
+
+- define
+- get
+- defineFn
+- getFn
+- guard
+- undefine
 
 ```javascript
 xtype.define(<name>, <type>, <options>)
@@ -19,11 +31,36 @@ xtype.define(<name>, <type>, <options>)
 - `options`: an object or function that is used for validation
 
 ```javascript
+xtype.undefine(<name>)
+```
+
+- `name`: name of the function to remove
+
+```javascript
 xtype.defineFn(<name>, <types...>)
 ```
 
 - `name`: name of the function.
 - `types`: each argument of the function is given one argument
+
+```javascript
+xtype.get(<name>)
+```
+
+- `name`: name of the function
+
+```javascript
+xtype.getFn(<name>)
+```
+
+- `name`: name of the
+```javascript
+xtype.guard(<name>, <fn>)
+```
+
+- `name`: name of the function definition
+- `fn`: function to run if validation passes
+
 
 ## Definitions
 
@@ -31,14 +68,14 @@ You use xType by creating 'definitions' that document what an object should
 consist of.
 
 ```javascript
-define('address', 'object', {
+xtype.define('address', 'object', {
     keys: {
         street: 'string',
         city: 'string'
     }
 });
 
-test = define('user', 'object', {
+var test = define('user', 'object', {
     keys: {
         id: 'number',
         name: 'string',
@@ -51,9 +88,9 @@ test({
     name: 'John',
     address: {
         number: 27,
-        street: 'Road
+        street: 'Road'
     }
-})
+});
 ```
 
 ## Options
@@ -66,7 +103,7 @@ does not match, or if an object has a key that is not in 'keys', then it will
 return false.
 
 ```javascript
-test = define('special_object', 'object', {
+var test = define('special_object', 'object', {
     keys: {
         id: 'number'
         name: 'string'
@@ -85,6 +122,24 @@ test = define('special_array', 'array', {
 
 test([10, 'word']); // true
 test(['word', 10]); // false
+```
+
+### Required Keys
+
+By default, all keys are optional. However, if you need to specify that an
+object is valid if it contains a key, you can set it as required.
+
+Do this by prefixing the type with an asterisk.
+
+```javascript
+var test = define('required', 'object', {
+    keys: {
+        id: '*number'
+    }
+});
+
+test({id: 20}); // true
+test({}); // false
 ```
 
 ### Other
@@ -171,14 +226,14 @@ xType allows you to split definitions in multiple sections, so you don't have
 to repeat yourself all the time.
 
 ```javascript
-define('model', 'object', {
+xtype.define('model', 'object', {
     keys: {
         id: 'number',
         name: 'string'
     }
 });
 
-task = define('task', 'object', {
+xtype.define('task', 'object', {
     inherit: 'model',
     keys: {
         completed: 'boolean',
@@ -186,16 +241,19 @@ task = define('task', 'object', {
     }
 });
 
-define('taskArray', 'array', {
+xtype.define('taskArray', 'array', {
     all: 'task'
 });
 
-list = define('list', 'object', {
+xtype.define('list', 'object', {
     inherit: 'model',
     keys: {
         tasks: 'taskArray'
     }
 });
+
+var task = xtype.get('task');
+var list = xtype.get('list');
 
 task({
     id: 20,
@@ -221,11 +279,138 @@ list({
         }
     ]
 }); // true
-````
+```
 
-## Todo
+## Fancy Inheritance
 
-- [x] Use native object prototypes for inheritance
-- [x] Write more tests
-- [x] Refactor code so it's not horrible
-- [ ] Convert coffee-script to javascript
+I haven't thought of a good name for this yet.
+
+Basically you can choose which definition to inherit, based on the object.
+
+To use it you set `inherit` as an possible definitions to inherit, as
+well as setting `check` to a function that accepts a single argument: object.
+
+`inherit` can be an object or an array, but whatever the `check` function
+returns will be used to try and access the property from it.
+
+```javascript
+xtype.define('a', 'object', {
+    keys: {
+        model: 'string'
+    }
+});
+
+xtype.define('b', 'object', {
+    keys: {
+        model: 'number'
+    }
+});
+
+xtype.define('c', 'object', {
+    keys: {
+        model: 'boolean'
+    }
+});
+
+
+xtype.define('thing', 'object', {
+    inherit: ['a', 'b', 'c'],
+    check: function (obj) {
+        switch (obj.type) {
+            case 'a': return 0;
+            case 'b': return 1;
+            case 'c': return 2;
+        }
+    }
+});
+
+var thing = xtype.get('thing');
+
+thing({
+    type: 'a',
+    model: 'string'
+}); // true
+
+thing({
+    type: 'b',
+    model: 30
+}); // true
+
+thing({
+    type: 'c',
+    model: true
+}); // true
+
+thing({
+    type: 'd',
+    model: true
+}); // false - type d doesn't exist
+```
+
+## Function Definitions
+
+This is used to create definitions for function arguments.
+
+### defineFn
+
+The first argument is the name of the function. The rest are the types of each
+argument. Every argument is required by default.
+
+```javascript
+xtype.defineFn('my_fn', 'string', 'number');
+```
+
+#### Optional Properties
+
+Prefix type with a `~` symbol.
+
+It is best to use this only the last argument, as xType won't do anything
+special if you make the first argument optional.
+
+```javascript
+var test = xtype.defineFn('my_fn', 'string', 'number', '~function');
+
+test('word', 30); // true
+test('word', 30, function () {}); // true
+
+test = xtype.defineFn('my_fn_2', '~string', '~number');
+
+test(); // true
+test('word'); // true
+test(undefined, 30); // true
+test(30); // false
+```
+
+### getFn
+
+Use this to get a function definition by it's name.
+
+Will throw an error if the definition doesn't exist.
+
+```javascript
+var test = xtype.getFn('my_fn');
+```
+
+### guard
+
+Use this to 'guard' a function, that will only run if validation passes.
+
+```javascript
+xtype.defineFn('my_fn', 'string', 'number');
+
+var fn = function (string, number) {
+    // can assume that string is actually a string
+    // and that number is really a number
+};
+
+// Guard fn
+var guard = xtype.guard('my_fn', fn);
+
+// will call fn
+guard('word', 30);
+
+// will not call fn
+guard();
+guard('word');
+guard(undefined, 30);
+```
