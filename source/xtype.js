@@ -1,7 +1,13 @@
 var Dictionary, define, functions, defineFn, dict, func, get, getFn;
 
 Dictionary = require('./dictionary');
-func = require('./fn');
+
+if (global.DEBUG) {
+  // Will print messages when a validation check fails
+  func = require('./fn_debug');
+} else {
+  func = require('./fn');
+}
 
 dict = new Dictionary();
 functions = new Dictionary();

@@ -1,3 +1,21 @@
+var log = function () {
+  var args = Array.prototype.slice.call(arguments);
+  args.unshift('\u001b[31m[xType]');
+  args.push('\u001b[0m');
+  console.log.apply(console, args);
+};
+
+var toString = function (obj) {
+  if (obj === null || obj === undefined) {
+    return obj;
+  } else if (typeof obj === 'function') {
+    return '[function]';
+  } else {
+    return obj.toString();
+  }
+};
+
+
 module.exports = {
 
   /*
@@ -9,6 +27,7 @@ module.exports = {
       if (type(arguments)) {
         return fn.apply(ctx, arguments);
       }
+      log('guard blocked call');
       return false;
     };
   },
@@ -32,7 +51,7 @@ module.exports = {
         }
 
         if (! arg(input[i])) {
-          console.log('xType input failed: ' + input[i])
+          log('Input ' + toString(input[i]));
           return false;
         }
 
@@ -52,10 +71,7 @@ module.exports = {
 
   custom: function(type, fn) {
     return function(obj) {
-      if (! type(obj)) {
-        console.log('xType.custom - type check failed', obj)
-        return false;
-      }
+      if (! type(obj)) { log('custom - type'); return false; }
       return fn(obj);
     };
   },
@@ -73,26 +89,52 @@ module.exports = {
   single: function(type, propType) {
     return function(obj) {
       var key, value;
-      if (! type(obj)) {
-        console.log('xType.single - type check failed', obj)
-        return false;
-      }
+      if (! type(obj)) { log('single - type'); return false; }
+
       for (key in obj) {
         if (obj.hasOwnProperty(key)) {
           value = obj[key];
           if (! propType(value)) {
-            console.log('xType.single - failed: ' + key + ' - ' + value);
+            log('single - prop: ' + toString(value));
             return false;
           }
         }
       }
+
+      return true;
+    };
+  },
+
+  single_req: function(type, propType, required) {
+    var len = required.length;
+    return function(obj) {
+      var key, value;
+      if (! type(obj)) { log('single_req - type'); return false; }
+
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          value = obj[key];
+          if (! propType(value)) {
+            log('single_req - prop:' + toString(value));
+            return false;
+          }
+        }
+      }
+
+      for (i = 0; i < len; i++) {
+        if (! obj.hasOwnProperty(required[i])) {
+          log('single_req - req: ' + required[i]);
+          return false;
+        }
+      }
+
       return true;
     };
   },
 
 
   /*
-   * Strict
+   * Basic
    *
    * Check that all properties in the object match against the keys.
    * Will return false if the object has a property not listed in keys.
@@ -101,26 +143,54 @@ module.exports = {
    * - keys (object) : functions to check each property
   */
 
-  strict: function(type, keys) {
+  basic: function(type, keys) {
     return function(obj) {
       var fn, key, value;
-      if (! type(obj)) {
-        console.log('xType.strict - failed type check', obj)
-        return false;
-      }
+      if (! type(obj)) { log('basic - type'); return false; }
+
       for (key in obj) {
         if (obj.hasOwnProperty(key)) {
           value = obj[key];
           fn = keys[key];
           if (! fn || ! fn (value)) {
-            console.log('xType.strict - failed: ' + key + ' - ' + value);
+            log('basic - prop: ' + toString(value));
             return false;
           }
         }
       }
+
       return true;
     };
   },
+
+  basic_req: function(type, keys, required) {
+    var len = required.length;
+    return function(obj) {
+      var fn, key, value, i;
+      if (! type(obj)) { log('basic_req - type'); return false; }
+
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          value = obj[key];
+          fn = keys[key];
+          if (! fn || ! fn (value)) {
+            log('basic_req - prop: ' + toString(value));
+            return false;
+          }
+        }
+      }
+
+      for (i = 0; i < len; i++) {
+        if (! obj.hasOwnProperty(required[i])) {
+          log('basic_req - req: ' + required[i]);
+          return false;
+        }
+      }
+
+      return true;
+    };
+  },
+
 
 
   /*
@@ -136,24 +206,50 @@ module.exports = {
   flexible: function(type, keys) {
     return function(obj) {
       var fn, key, value;
-      if (! type(obj)) {
-        console.log('xType.flexible - failed type check', obj)
-        return false;
-      }
+      if (! type(obj)) { log('flexible - type'); return false; }
+
       for (key in obj) {
         if (obj.hasOwnProperty(key)) {
           value = obj[key];
           fn = keys[key];
           if (fn && ! fn (value)) {
-            console.log('xType failed for: ' + key + ' - ' + value);
+            log('flexible - prop: ' + toString(value));
             return false;
           }
         }
       }
+
       return true;
     };
   },
 
+  flexible_req: function(type, keys, required) {
+    var len = required.length;
+    return function(obj) {
+      var fn, key, value;
+      if (! type(obj)) { log('flexible_req - type'); return false; }
+
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          value = obj[key];
+          fn = keys[key];
+          if (fn && ! fn (value)) {
+            log('flexible_req - prop: ' + toString(value));
+            return false;
+          }
+        }
+      }
+
+      for (i = 0; i < len; i++) {
+        if (! obj.hasOwnProperty(required[i])) {
+          log('flexible_req - req: ' + required[i]);
+          return false;
+        }
+      }
+
+      return true;
+    };
+  },
 
   /*
    * Set Prototype for Inheritance
@@ -199,8 +295,8 @@ module.exports = {
     return function(obj) {
       var index = check(obj);
       if (index == null || ! protoFns.hasOwnProperty(index)) {
-        console.log('xType.switchProto - failed index', index)
         keys.__proto__ = null;
+        log('switchProto - check(obj) failed');
         return false;
       }
       protoFns[index](obj);
@@ -226,13 +322,10 @@ module.exports = {
      * - protoFn (array)
     */
 
-    strict: function(type, keys, protoFn) {
+    basic: function(type, keys, protoFn) {
       return function(obj) {
         var fn, key, value;
-        if (! type(obj)) {
-          console.log('xType.inherit.strict - failed type check', obj)
-          return false;
-        }
+        if (! type(obj)) { log('inherit.basic - type'); return false; }
 
         protoFn(obj);
 
@@ -241,11 +334,42 @@ module.exports = {
             value = obj[key];
             fn = keys[key];
             if (! fn || ! fn(value)) {
-              console.log('xType.inherit.strict - failed:', key, value)
+              log('inherit.basic - prop: ' + toString(value));
               return false;
             }
           }
         }
+
+        return true;
+      };
+    },
+
+    basic_req: function(type, keys, protoFn, required) {
+      var len = required.length;
+      return function(obj) {
+        var fn, key, value;
+        if (! type(obj)) { log('inherit.basic_req - type'); return false; }
+
+        protoFn(obj);
+
+        for (key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            value = obj[key];
+            fn = keys[key];
+            if (! fn || ! fn(value)) {
+              log('inherit.basic_req - prop: ' + toString(value));
+              return false;
+            }
+          }
+        }
+
+        for (i = 0; i < len; i++) {
+          if (! obj.hasOwnProperty(required[i])) {
+            log('inherit.basic_req - req: ' + required[i]);
+            return false;
+          }
+        }
+
         return true;
       };
     },
@@ -262,10 +386,7 @@ module.exports = {
     flexible: function(type, keys, protoFn) {
       return function(obj) {
         var fn, key, value;
-        if (! type(obj)) {
-          console.log('xType.inherit.flexible - failed type check', obj)
-          return false;
-        }
+        if (! type(obj)) { log('inherit.flexible - type'); return false; }
 
         protoFn(obj);
 
@@ -274,11 +395,43 @@ module.exports = {
             value = obj[key];
             fn = keys[key];
             if (fn && ! fn(value)) {
-              console.log('xType.inherit.flexible - failed:', key, value)
+              log('inherit.flexible - prop: ' + toString(value));
               return false;
             }
           }
         }
+
+        return true;
+      };
+    },
+
+
+    flexible_req: function(type, keys, protoFn, required) {
+      var len = required.length;
+      return function(obj) {
+        var fn, key, value;
+        if (! type(obj)) { log('inherit.flexible_req - type'); return false; }
+
+        protoFn(obj);
+
+        for (key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            value = obj[key];
+            fn = keys[key];
+            if (fn && ! fn(value)) {
+              log('inherit.flexible_req - prop: ' + toString(value));
+              return false;
+            }
+          }
+        }
+
+        for (i = 0; i < len; i++) {
+          if (! obj.hasOwnProperty(required[i])) {
+            log('inherit.flexible_req - req: ' + required[i]);
+            return false;
+          }
+        }
+
         return true;
       };
     }
